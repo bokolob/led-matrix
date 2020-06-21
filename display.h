@@ -20,6 +20,7 @@ class Display {
   public:
     Display();
     void putPoint(int col, int row, boolean value);
+    void clear();
     boolean getPoint(int col, int row);
 
     void printLine(int row_num);

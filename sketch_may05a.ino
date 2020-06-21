@@ -4,6 +4,8 @@
 #include <avr/interrupt.h>
 #include "font.h"
 #include "display.h"
+#include "keyboard.h"
+#include "tetris.h"
 
 void fill(char ** argv);
 void blank(char ** argv);
@@ -13,7 +15,9 @@ void font_test(char ** argv);
 void line(char ** argv);
 void dot(char ** argv);
 
-Display display1;
+Display *display1;
+Tetris *tetris;
+Keyboard *keyboard;
 
 struct callable {
   String fname;
@@ -32,10 +36,12 @@ struct callable calls[] = {
 
 void setup() {
   Serial.begin(9600);
+  randomSeed(analogRead(0));
+  Serial.println("XXX");
+  display1 = new Display();
+  keyboard = new Keyboard();
+  tetris = new Tetris(display1, keyboard);
   
-  display1 = Display();
-  
-
    // Turn off toggling of pin 11 and 3
    FrequencyTimer2::disable();
    // Set refresh rate (interrupt timeout period)
@@ -44,16 +50,20 @@ void setup() {
    FrequencyTimer2::setOnOverflow(draw_screen);
 }
 
+ISR(ADC_vect) {
+  keyboard->interrupt();
+}
+
 
 void draw(unsigned int i) {
       Serial.println("printing " + String(i, BIN));
 
       for (int j = 0; j < COLS; j++) {
         if (i & (1 << j)) {
-           display1.putPoint(0, j, true);
+           display1->putPoint(0, j, true);
         }
         else {
-           display1.putPoint(0, j, false);
+           display1->putPoint(0, j, false);
         }
 
          //Serial.println(String(i) + " "+ ((i & (1 << j) > 0) ? "LOW" : "HIGH"));
@@ -65,8 +75,15 @@ void draw(unsigned int i) {
 volatile int current_row = 0;
 
 void loop() {
-  while(Serial.available() == 0) {}
+  tetris->turn();
+ 
+  /*while(Serial.available() == 0) {
+    Serial.println("A1="+String(analogRead(1)));  
+  }
+  
   String command = Serial.readStringUntil('\n');
+  Serial.println(command);
+
   char buffer[30];
 
   command.toCharArray(buffer, sizeof(buffer));
@@ -86,7 +103,7 @@ void loop() {
     }
     
   }
-    
+    */
 }
 
 void split_args(char* input, char *words[]) {
@@ -118,7 +135,7 @@ void line(char ** argv) {
   Serial.println("line at "+String(l));
 
   for (int i = 0; i < COLS; i++) {
-    display1.putPoint(l,i,true);
+    display1->putPoint(l,i,true);
   }
   
 }
@@ -127,7 +144,7 @@ void line(char ** argv) {
 void dot(char ** argv) {
   int y = atoi(argv[1]);
   int x = atoi(argv[2]);
-  display1.putPoint(y,x, !display1.getPoint(y,x));
+  display1->putPoint(y,x, !display1->getPoint(y,x));
 }
 
 
@@ -142,7 +159,7 @@ void font_test(char ** argv) {
 void effect3(char ** argv) {
   for (int y = ROWS-1; y >=0; y--) {
     for (int x = COLS-1; x >= 0; x--) {
-         display1.putPoint(y,x, true);
+         display1->putPoint(y,x, true);
         delay(50);
     }
   }
@@ -160,7 +177,7 @@ void effect2(char ** argv) {
   
   while (width > 0 && height > 0) {
      for (int i = 0; i < width; i++) {
-        display1.putPoint(y,x, true);
+        display1->putPoint(y,x, true);
         x = x + dx;
         delay(50);
      }
@@ -168,7 +185,7 @@ void effect2(char ** argv) {
      x-=dx; 
   
      for (int i = 0; i < height; i++) {
-        display1.putPoint(y,x, true);
+        display1->putPoint(y,x, true);
         y = y + dy;
         delay(50);
      }
@@ -191,11 +208,11 @@ void effect1(char ** argv) {
 
   while ((y < ROWS) || (x < COLS)) {
     for(int i = 0; i <= x && y < ROWS; i++) {
-      display1.putPoint(y,i, true);
+      display1->putPoint(y,i, true);
     }
 
     for(int i = 0; i <= y && x < COLS; i++) {
-      display1.putPoint(i,x, true);
+      display1->putPoint(i,x, true);
     }
 
 //Serial.println("x="+String(x)+" y="+String(y));
@@ -236,17 +253,17 @@ void put_char(int code, int y, int x) {
       uint8_t mask = B00010000;
       for (int j = 0; j < 5; j++, mask >>= 1 ) {
          if ((character & mask) != 0) {
-           display1.putPoint(y+i,x+j, true); 
+           display1->putPoint(y+i,x+j, true); 
          }
          else {
-           display1.putPoint(y+i,x+j, false);
+           display1->putPoint(y+i,x+j, false);
          } 
       }
   }  
 }
 
 void draw_screen() {         
-       display1.printLine(current_row);
+       display1->printLine(current_row);
        current_row = (current_row +1) % ROWS;
 }
 
@@ -256,7 +273,7 @@ void serial_print_screen() {
     for (int i = 0; i < ROWS; i++) {
       Serial.print(""+String(i)+": ");
       for (int j = 0; j < COLS; j++) {
-        Serial.print( display1.getPoint(i,j) );
+        Serial.print( display1->getPoint(i,j) );
       }
       Serial.println("");
      
@@ -267,7 +284,7 @@ void serial_print_screen() {
 void fill(char ** argv) {
   for (int i = 0; i < ROWS; i++) {
     for (int j = 0; j < COLS; j++) {
-      display1.putPoint(i,j, true);
+      display1->putPoint(i,j, true);
     }
 
   }
@@ -276,7 +293,7 @@ void fill(char ** argv) {
 void blank(char ** argv) {
   for (int i = 0; i < ROWS; i++) {
     for (int j = 0; j < COLS; j++) {
-      display1.putPoint(i,j, false);
+      display1->putPoint(i,j, false);
     }
   }
 }
