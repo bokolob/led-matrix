@@ -35,7 +35,7 @@ struct callable calls[] = {
   };
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(19200);
   randomSeed(analogRead(0));
   Serial.println("XXX");
   display1 = new Display();
