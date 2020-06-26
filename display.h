@@ -25,10 +25,12 @@ class Display {
 
     void printLine(int row_num);
 
+    bool*  getScreen();
+    
   private:
     bool screen[ROWS][COLS];
     byte output_ports[6];
-
+    
     void disable_rows();
     void enable_row(int r);
     byte reverse(byte b);

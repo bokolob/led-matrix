@@ -57,6 +57,20 @@ void Tetris::check_lines() {
         for (int n = 0; n < 11; n++) {
            display->putPoint(ry+y, n, false);    
         }
+        delay(200);
+
+        for (int l = ry+y; l > 0; l--) {
+           for (int n = 0; n < 11; n++) {
+              display->putPoint(l, n, display->getPoint(l-1, n));    
+           }
+        }
+
+        for (int n = 0; n < 11; n++) {
+           display->putPoint(0, n, false);    
+        }
+        
+       // memmove(display->getScreen()+11,  display->getScreen(), 11*(ry+y-1)  );
+        
        }
 
     }
@@ -92,7 +106,7 @@ Tetris::Tetris(Display *display, Keyboard *keyboard) {
          rotate = 0;
          ts = millis();
          prev_turn = millis();
-         speed_ = 200;
+         speed_ = 300;
 }
 
 
@@ -112,6 +126,7 @@ void Tetris::turn() {
         }
     }
 
+    keyboard->update();
     int key = keyboard->read();
   
     int dx = 0;

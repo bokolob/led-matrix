@@ -19,9 +19,13 @@ Display::Display() {
     out_byte(1, 0xff); 
 }
 
-    void Display::putPoint(int col, int row, boolean value) {
+ bool* Display::getScreen() {
+  return &(screen[0][0]);
+ }
+
+ void Display::putPoint(int col, int row, boolean value) {
         screen[col][row] = value;
-    }
+ }
 
   boolean Display::getPoint(int col, int row) {
      return screen[col][row];
@@ -56,7 +60,6 @@ void Display::clear() {
     }
 
     disable_rows();
-   // delayMicroseconds(25);
 
     for (int i = 0; i < MEMORY_BLOCKS; i++) {
         out_byte(i, ~(binary[i])); // надо поставить 0 чтобы зажечь светодиод, т.к тут мы управляем катодом (-)     

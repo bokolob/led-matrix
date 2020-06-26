@@ -50,10 +50,6 @@ void setup() {
    FrequencyTimer2::setOnOverflow(draw_screen);
 }
 
-ISR(ADC_vect) {
-  keyboard->interrupt();
-}
-
 
 void draw(unsigned int i) {
       Serial.println("printing " + String(i, BIN));
