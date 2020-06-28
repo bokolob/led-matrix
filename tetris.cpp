@@ -17,6 +17,18 @@ void do_rotation(int matrix, int x0, int y0, int *dst_x, int *dst_y) {
     *dst_y = matricies[matrix][1][0] * (x0) + matricies[matrix][1][1] * (y0)  + matricies[matrix][1][2];
 }
 
+void Tetris::traverse_tetronomino(void (*callback)(int,int, void*), void *arg) {
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (tetrominoes[figure][i][j]==1) {
+                int rx, ry;
+                do_rotation(rotate, j, i, &rx, &ry);
+                callback(ry+y, rx + x, arg);
+            }
+        }
+    }
+}
+
 bool Tetris::check_place(int x, int y, int rotate) {
 
     for (int i = 0; i < 2; i++) {
@@ -40,14 +52,10 @@ bool Tetris::check_place(int x, int y, int rotate) {
     return true;
 }
 
-void Tetris::check_lines() {
-    for (int i = 0; i < 2; i++) {
-       int rx, ry;
-       do_rotation(rotate, 0, i, &rx, &ry);  
-  
+void Tetris::check_line(int ry) {
        bool filled = true;    
        for (int j = 0; j < 11; j++) {
-          if (!display->getPoint(ry+y, j)) {
+          if (!display->getPoint(ry, j)) {
             filled = false;
             break; 
           }
@@ -55,11 +63,11 @@ void Tetris::check_lines() {
 
        if (filled) {
         for (int n = 0; n < 11; n++) {
-           display->putPoint(ry+y, n, false);    
+           display->putPoint(ry, n, false);    
         }
         delay(200);
 
-        for (int l = ry+y; l > 0; l--) {
+        for (int l = ry; l > 0; l--) {
            for (int n = 0; n < 11; n++) {
               display->putPoint(l, n, display->getPoint(l-1, n));    
            }
@@ -69,10 +77,25 @@ void Tetris::check_lines() {
            display->putPoint(0, n, false);    
         }
         
-       // memmove(display->getScreen()+11,  display->getScreen(), 11*(ry+y-1)  );
         
        }
+}
 
+void Tetris::check_lines() {
+    for (int i = 0; i < 2; i++) {
+       for (int j = 0; j < 4; j++) {
+          if (tetrominoes[figure][i][j]==1) {
+             int rx, ry;
+             do_rotation(rotate, j, i, &rx, &ry);  
+             ry+=y;
+        
+             if (ry < 0 || ry >= 20) {
+                return;
+             }
+            
+             check_line(ry);
+          }
+       }
     }
 }
 
@@ -138,8 +161,6 @@ void Tetris::turn() {
     if (key & K_UP) {dr++;}
 
      if (prev_turn - ts >= speed_) {
-      //  Serial.println("down");
-        ts = prev_turn;
         dy++;
      }
     
@@ -165,5 +186,9 @@ void Tetris::turn() {
     
     if (figure != -1) {
       put_on_board();
+    }
+
+    if (dy != 0) {
+      ts = millis();
     }
 }

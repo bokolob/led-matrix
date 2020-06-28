@@ -70,6 +70,8 @@ class Tetris
         void put_on_board();
         void delete_from_board();
         void check_lines();
+        void check_line(int y0);
+        void traverse_tetronomino(void (*callback)(int,int, void*), void *arg);
     
         bool check_place(int x, int y, int rotate);
         void put_on_board( boolean val);

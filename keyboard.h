@@ -14,14 +14,19 @@
 
 class Keyboard {
     private:
+
+        enum State {RELEASED, PRESSED, COUNTING_1, COUNTING_0, SKIPPING};
+        
         struct key_state {
             unsigned long last_read_time;
             int count;
-            bool last_state;
+            State state;
+            boolean last_state;
             uint8_t mask;
         };
 
         volatile uint8_t value;
+        uint8_t prev_value;
         unsigned long last_read_time;
         struct key_state *keys;
       
